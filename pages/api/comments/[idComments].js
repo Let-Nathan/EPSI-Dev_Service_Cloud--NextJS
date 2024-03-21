@@ -8,28 +8,34 @@ export default async function handler(req, res) {
         const { idComment } = req.query;
         const commentId = new ObjectId(idComment);
 
-        const client = await clientPromise;
-        const db = client.db('sample_mflix');
-
         switch (req.method) {
             case 'GET':
-                console.log('ID du commentaire:', idComment);
-                const comment = OrmService.findOne('comments', )
-                const comment = await db.collection('comments').findOne({ _id: commentId });
-                console.log('Commentaire trouvé:', comment);
-
-                if (!comment) {
-                    res.status(404).json({ status: 404, message: 'Comment not found' });
-                    return;
+                try {
+                    const idComment = req.body;
+                    const comment = await OrmService.connectAndFindOneById('comments', idComment);
+                    if (!comment) {
+                        res.status(404).json({ status: 404, message: 'Comment not found' });
+                        return;
+                    }
+                    res.status(200).json({ status: 200, data: comment});
+                } catch (e) {
+                    console.error('Error:', error);
+                    res.status(500).json({ status: 500, message: 'Internal Server Error' });
                 }
-                res.status(200).json({ status: 200, data: comment });
                 break;
             case 'POST':
-                const newComment = { ...commentObject, ...req.body };
-                const insertResult = await db.collection('comments').insertOne(newComment);
-                if (insertResult.insertedCount === 1) {
-                    res.status(201).json({ status: 201, data: { message: 'Comment created successfully' } });
-                } else {
+                try {
+                    
+                    const newComment = req.body;
+                    console.log(newComment);
+                    const insertComment = await OrmService.insertOne('comments', newComment);
+                    if (insertComment.result.ok === 1) {
+                        res.status(201).json({ status: 201, data: { message: 'Comment created successfully' } });
+                    } else {
+                        res.status(500).json({ status: 500, message: 'Error creating comment' });
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
                     res.status(500).json({ status: 500, message: 'Error creating comment' });
                 }
                 break;
@@ -44,15 +50,14 @@ export default async function handler(req, res) {
                 }
                 break;
             case 'DELETE':
-                const deleteResult = await db.collection('comments').deleteOne({ _id: commentId });
+                const idComment = req.body;
+                const deleteResult = await OrmService.deleteOne('comments', idComment);
                 if (deleteResult.deletedCount === 1) {
                     res.status(200).json({ status: 200, message: 'Comment deleted successfully' });
                 } else {
                     res.status(404).json({ status: 404, message: 'Comment not found' });
                 }
                 break;
-            default:
-                res.status(405).json({ status: 405, message: 'Method Not Allowed' });
         }
     } catch (error) {
         console.error('Error:', error);
