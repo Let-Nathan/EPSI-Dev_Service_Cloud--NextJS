@@ -24,8 +24,7 @@ export default async function handler(req, res) {
                 }
                 break;
             case 'POST':
-                try {
-                    
+                try {   
                     const newComment = req.body;
                     console.log(newComment);
                     const insertComment = await OrmService.insertOne('comments', newComment);
